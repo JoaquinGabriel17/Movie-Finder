@@ -1,9 +1,12 @@
+import './MovieCard.css';
+
 const MovieCard = ({ movie }) => {
   return (
-    <div className="border p-3 rounded shadow-sm hover:shadow-md transition">
-      <h2 className="text-xl font-semibold mb-1">{movie.title}</h2>
-      <p className="text-sm text-gray-600 mb-2">{movie.release_date}</p>
-      <p className="text-sm">{movie.overview?.slice(0, 150)}...</p>
+    <div className="card-contain">
+      <h2 className="card-title">{movie.title}</h2>
+      <h3 className="card-vote">{movie.vote_average}</h3>
+      <p className="card-date">{movie.release_date}</p>
+      <p className="card-overview">{movie.overview?.slice(0, 150)}...</p>
     </div>
   );
 };

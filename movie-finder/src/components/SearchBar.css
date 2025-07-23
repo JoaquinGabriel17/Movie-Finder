@@ -1,0 +1,52 @@
+.main-input {
+  width: 600px;
+  padding: 16px 24px;
+  font-size: 18px;
+  border: none;
+  border-radius: 12px;
+  outline: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  background-color: #fff;
+  color: #333;
+  margin-bottom: 100px;
+}
+
+.main-input::placeholder {
+  color: #999;
+}
+
+.main-input:focus {
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.5);
+  background-color: #fff;
+}
+
+.searchbar-background{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-image: url('/cinema.jpg');
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  width: 100vw;
+}
+
+.searchbar-background::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7); /* oscurece la imagen */
+  z-index: 1;
+}
+
+.searchbar-container {
+  position: relative;
+  z-index: 2;
+  color: white;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}

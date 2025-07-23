@@ -24,10 +24,20 @@ function App() {
     });
   }, [movies]);
 
-  const results = query
-    ? fuse.search(query).map((result) => result.item)
-    : movies;
+ const results = useMemo(() => {
+  if (query) {
+    return fuse
+      .search(query)
+      .map((result) => result.item)
+      .sort((a, b) => b.vote_average - a.vote_average);
+  } else {
+    return [...movies].sort((a, b) => b.vote_average - a.vote_average);
+  }
+}, [query, fuse, movies]);
 
+useEffect(() => {
+  setVisibleMovies(20);
+}, [query]);
 
 
   //                                                     Lógica de paginación
@@ -69,9 +79,10 @@ useEffect(() => {
 
   return (
     <div className="p-4">
-      <h1 className="text-3xl font-bold mb-4">Todas las películas. Una sola búsqueda.</h1>
-      <SearchBar query={query} setQuery={setQuery} />
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+      
+        <SearchBar query={query} setQuery={setQuery} />
+       
+      <div className="movies-container">
 
         {results.slice(0, visibleMovies).map((movie) => (
         <MovieCard key={movie.id} movie={movie} />
