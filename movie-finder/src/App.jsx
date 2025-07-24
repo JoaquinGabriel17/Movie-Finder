@@ -1,22 +1,42 @@
-import { useEffect, useState, useMemo, useRef  } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import Fuse from "fuse.js";
 import SearchBar from "./components/SearchBar";
 import MovieCard from "./components/MovieCard";
+import Filters from "./components/Filters";
 
 function App() {
   const [movies, setMovies] = useState([]);
   const [query, setQuery] = useState("");
+  const [selectedGenre, setSelectedGenre] = useState("");
+  const [voteRange, setVoteRange] = useState([0, 10]);
+  const [dateRange, setDateRange] = useState(["1900-01-01", "2100-01-01"]);
+  //estados para ordenamiento
+  const [sortBy, setSortBy] = useState("vote_average");
+  const [sortOrder, setSortOrder] = useState("desc");
+
+  //reset de filtros
+  const resetFilters = () => {
+  setSelectedGenre("");
+  setVoteRange([0, 10]);
+  setDateRange(["1900-01-01", "2100-01-01"]);
+  setSortBy("vote_average");
+  setSortOrder("desc");
+  };
 
 
-
-  // Cargar JSON local
   useEffect(() => {
     fetch("/movies.json")
       .then((res) => res.json())
-      .then((data) => setMovies(data));
+      .then((data) =>
+        setMovies(
+          data.map((movie) => ({
+            ...movie,
+            genres: JSON.parse(movie.genres),
+          }))
+        )
+      );
   }, []);
 
-  // Fuse.js setup
   const fuse = useMemo(() => {
     return new Fuse(movies, {
       keys: ["title", "overview", "genres"],
@@ -24,91 +44,93 @@ function App() {
     });
   }, [movies]);
 
- const results = useMemo(() => {
-  if (query) {
-    return fuse
-      .search(query)
-      .map((result) => result.item)
-      .sort((a, b) => b.vote_average - a.vote_average);
-  } else {
-    return [...movies].sort((a, b) => b.vote_average - a.vote_average);
+  const results = useMemo(() => {
+  let filtered = query
+    ? fuse.search(query).map((result) => result.item)
+    : [...movies];
+
+  if (selectedGenre) {
+    filtered = filtered.filter((movie) =>
+      movie.genres.some((genre) => genre.name === selectedGenre)
+    );
   }
-}, [query, fuse, movies]);
 
-useEffect(() => {
-  setVisibleMovies(20);
-}, [query]);
+  filtered = filtered.filter((movie) => {
+    const vote = movie.vote_average;
+    const date = new Date(movie.release_date);
+    return (
+      vote >= voteRange[0] &&
+      vote <= voteRange[1] &&
+      date >= new Date(dateRange[0]) &&
+      date <= new Date(dateRange[1])
+    );
+  });
+
+  return filtered.sort((a, b) => {
+    const aVal = sortBy === "vote_average" ? a.vote_average : new Date(a.release_date);
+    const bVal = sortBy === "vote_average" ? b.vote_average : new Date(b.release_date);
+    return sortOrder === "asc" ? aVal - bVal : bVal - aVal;
+  });
+}, [query, fuse, movies, selectedGenre, voteRange, dateRange, sortBy, sortOrder]);
 
 
-  //                                                     Lógica de paginación
-  /*const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 20;
-
-  const paginatedResults = results.slice(
-  (currentPage - 1) * itemsPerPage,
-  currentPage * itemsPerPage
-  );*/
-
-                                                  //Logica para scroll infinito
-  const [visibleMovies, setVisibleMovies] = useState(20); // empieza mostrando 20
+  const [visibleMovies, setVisibleMovies] = useState(20);
 
   const loadMore = () => {
     setVisibleMovies((prev) => prev + 20);
   };
+
   const loaderRef = useRef();
 
-useEffect(() => {
-  const observer = new IntersectionObserver((entries) => {
-    if (entries[0].isIntersecting) {
-      loadMore();
+  useEffect(() => {
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        loadMore();
+      }
+    });
+
+    if (loaderRef.current) {
+      observer.observe(loaderRef.current);
     }
-  });
 
-  if (loaderRef.current) {
-    observer.observe(loaderRef.current);
-  }
-
-  return () => {
-    if (loaderRef.current) observer.unobserve(loaderRef.current);
-  };
-}, []);
-
-
-
-
+    return () => {
+      if (loaderRef.current) observer.unobserve(loaderRef.current);
+    };
+  }, []);
 
   return (
     <div className="p-4">
-      
-        <SearchBar query={query} setQuery={setQuery} />
-       
+      <SearchBar query={query} setQuery={setQuery} />
+      <div className="filters-separator">
+      <Filters
+  selectedGenre={selectedGenre}
+  setSelectedGenre={setSelectedGenre}
+  voteRange={voteRange}
+  setVoteRange={setVoteRange}
+  dateRange={dateRange}
+  setDateRange={setDateRange}
+  sortBy={sortBy}
+  setSortBy={setSortBy}
+  sortOrder={sortOrder}
+  setSortOrder={setSortOrder}
+  resetFilters={resetFilters}
+/>
+
+      <div className="movies-separator">
       <div className="movies-container">
-
         {results.slice(0, visibleMovies).map((movie) => (
-        <MovieCard key={movie.id} movie={movie} />
+          <MovieCard key={movie.id} movie={movie} />
         ))}
-
       </div>
-  
-<div ref={loaderRef} style={{ height: "40px", textAlign: "center", margin: "20px" }}>
-  <span>Cargando más...</span>
-</div>
 
-
-  {/*HTML del paginado
-  Array.from({ length: Math.ceil(results.length / itemsPerPage) }).map((_, index) => (
-    <button
-      key={index}
-      onClick={() => setCurrentPage(index + 1)}
-      style={{
-        margin: "5px",
-        backgroundColor: currentPage === index + 1 ? "gray" : "white",
-      }}
-    >
-      {index + 1}
-    </button>
-  ))*/}
-
+      <div
+        ref={loaderRef}
+        style={{ height: "40px", textAlign: "center", margin: "20px" }}
+      >
+        <span>Cargando más...</span>
+      </div>
+      </div>
+      </div>
     </div>
   );
 }

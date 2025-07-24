@@ -50,3 +50,9 @@
   align-items: center;
   text-align: center;
 }
+
+@media (max-width: 768px) {
+  .main-input {
+    width: 90%;
+  }
+}
