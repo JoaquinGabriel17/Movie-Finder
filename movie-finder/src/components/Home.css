@@ -1,0 +1,10 @@
+.github-button{
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 999;
+    cursor: pointer;
+    background-color: rgba(0,0,0,0);
+    border: 0;
+    
+}
